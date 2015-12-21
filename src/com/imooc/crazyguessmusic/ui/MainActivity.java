@@ -7,27 +7,39 @@ import java.util.TimerTask;
 import android.app.Activity;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.animation.Animation;
 import android.view.animation.Animation.AnimationListener;
 import android.view.animation.AnimationUtils;
 import android.view.animation.LinearInterpolator;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.LinearLayout.LayoutParams;
 
 import com.imooc.crazyguessmusic.R;
+import com.imooc.crazyguessmusic.R.color;
+import com.imooc.crazyguessmusic.modle.IWordClickListener;
 import com.imooc.crazyguessmusic.modle.WordButton;
 import com.imooc.crazyguessmusic.myUi.MyGridView;
+import com.imooc.crazyguessmusic.util.ViewUtil;
 
-public class MainActivity extends Activity implements OnClickListener {
+public class MainActivity extends Activity implements OnClickListener,IWordClickListener {
 
 	private Animation mPanAnim, mBar_in, mBar_out;
 	private ImageButton mIbtn_play;
 	private ImageView mImg_pan, mImg_bar;
 	private MyGridView mMyGridView;
+	//已选择文字信息存储容器
+	private ArrayList<WordButton> mWordSelected;
 	//是否正在播放的标志位
 	private boolean isRunning = false;
+	//已选择文字显示容器
+	private LinearLayout mSelectedContainer;
 	
 	private Timer mTimer;
 	//存储按钮数据的list
@@ -42,6 +54,7 @@ public class MainActivity extends Activity implements OnClickListener {
 		mImg_pan = (ImageView) findViewById(R.id.img_pan);
 		mImg_bar = (ImageView) findViewById(R.id.img_bar);
 		mMyGridView = (MyGridView) findViewById(R.id.myGridView);
+		mSelectedContainer = (LinearLayout) findViewById(R.id.selected_container);
 		// 初始化动画
 		// 盘片动画
 		mPanAnim = AnimationUtils.loadAnimation(MainActivity.this,
@@ -58,9 +71,22 @@ public class MainActivity extends Activity implements OnClickListener {
 		mBar_out.setAnimationListener(new BarOutListener());
 		// 设置点击事件
 		mIbtn_play.setOnClickListener(this);
+		mMyGridView.setOnWordClickListener(this);
 		//初始化数据
 		initCurrentStageData();
 	}
+	/**
+	 * 初始化当前关卡
+	 */
+	public void initCurrentStageData(){
+		//获取数据
+		mArrayList = getButtonList();
+		//更新MyGridView
+		mMyGridView.updateData(mArrayList);
+		//更新已选择文字框数据
+		updateSelectedContainer();
+	}
+	
 	/**
 	 * 按钮点击事件的实现
 	 */
@@ -104,13 +130,23 @@ public class MainActivity extends Activity implements OnClickListener {
 		}
 	}
 	
-	public void initCurrentStageData(){
-		//获取数据
-		mArrayList = getButtonList();
-		//更新MyGridView
-		mMyGridView.updateData(mArrayList);
+	/**
+	 * 更新当前关卡的待选择文字
+	 */
+	public void updateSelectedContainer() {
+		mWordSelected = this.initSelectedWords();
+		LayoutParams lp = new LayoutParams(-2,-2);
+		//设置水平居中
+		mSelectedContainer.setGravity(Gravity.CENTER_HORIZONTAL);
+		//给LinearLayout设置View
+		for(int i=0;i<mWordSelected.size();i++){
+			mSelectedContainer.addView(mWordSelected.get(i).getmButton(), lp);
+		}
 	}
-	
+	/**
+	 * 初始化待选文字框
+	 * @return
+	 */
 	public ArrayList<WordButton> getButtonList(){
 		//获得所有待选文字 TODO
 		ArrayList<WordButton> data = new ArrayList<WordButton>();
@@ -119,6 +155,26 @@ public class MainActivity extends Activity implements OnClickListener {
 			button.setmIndex(i);
 			button.setmWordString("测");
 			data.add(button);
+		}
+		return data;
+	}
+	/**
+	 * 初始化已选择文字
+	 * @return
+	 */
+	public ArrayList<WordButton> initSelectedWords(){
+		ArrayList<WordButton> data = new ArrayList<WordButton>();
+		for(int i=0;i<4;i++){
+			View view = ViewUtil.getInflatedView(MainActivity.this, R.layout.self_ui_gridview_item);
+			WordButton holder = new WordButton();
+			holder.setmButton((Button) view.findViewById(R.id.item_button));
+			Button mButton = holder.getmButton();
+			mButton.setTextColor(color.white);
+			mButton.setText("");
+			holder.setmIsVisiable(false);
+			mButton.setBackgroundResource(R.drawable.game_wordblack);
+			
+			data.add(holder);
 		}
 		return data;
 	}
@@ -202,5 +258,12 @@ public class MainActivity extends Activity implements OnClickListener {
 		mImg_pan.clearAnimation();
 		mImg_bar.clearAnimation();
 		super.onPause();
+	}
+	/**
+	 * 待选框点击事件接口实现方法
+	 */
+	@Override
+	public void onWordClick(WordButton wordButton) {
+		wordButton.setmIsVisiable(false);
 	}
 }

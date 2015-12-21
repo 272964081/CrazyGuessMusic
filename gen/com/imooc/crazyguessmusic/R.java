@@ -12,6 +12,7 @@ public final class R {
         public static final int rotate_bar_in=0x7f040000;
         public static final int rotate_bar_out=0x7f040001;
         public static final int rotate_pan=0x7f040002;
+        public static final int scale_button=0x7f040003;
     }
     public static final class attr {
     }
@@ -46,29 +47,31 @@ public final class R {
         public static final int game_title=0x7f02000c;
         public static final int game_word0=0x7f02000d;
         public static final int game_word1=0x7f02000e;
-        public static final int ic_launcher=0x7f02000f;
-        public static final int index_background=0x7f020010;
-        public static final int index_bar=0x7f020011;
-        public static final int index_start=0x7f020012;
-        public static final int index_start_sel=0x7f020013;
-        public static final int selector_gridview_button_item=0x7f020014;
-        public static final int selector_play_btn=0x7f020015;
+        public static final int game_wordblack=0x7f02000f;
+        public static final int ic_launcher=0x7f020010;
+        public static final int index_background=0x7f020011;
+        public static final int index_bar=0x7f020012;
+        public static final int index_start=0x7f020013;
+        public static final int index_start_sel=0x7f020014;
+        public static final int selector_gridview_button_item=0x7f020015;
+        public static final int selector_play_btn=0x7f020016;
     }
     public static final class id {
-        public static final int action_settings=0x7f0a000d;
-        public static final int btn_play=0x7f0a0006;
-        public static final int btn_top_back=0x7f0a000a;
-        public static final int btn_top_coins=0x7f0a000b;
-        public static final int gv_test=0x7f0a0009;
-        public static final int imageView1=0x7f0a0001;
-        public static final int imageView2=0x7f0a0003;
-        public static final int imageView4=0x7f0a0005;
-        public static final int img_bar=0x7f0a0007;
-        public static final int img_pan=0x7f0a0004;
-        public static final int item_button=0x7f0a0008;
-        public static final int myGridView=0x7f0a0000;
-        public static final int textView1=0x7f0a0002;
-        public static final int tv_coins=0x7f0a000c;
+        public static final int action_settings=0x7f0a000e;
+        public static final int btn_play=0x7f0a0007;
+        public static final int btn_top_back=0x7f0a000b;
+        public static final int btn_top_coins=0x7f0a000c;
+        public static final int gv_test=0x7f0a000a;
+        public static final int imageView1=0x7f0a0002;
+        public static final int imageView2=0x7f0a0004;
+        public static final int imageView4=0x7f0a0006;
+        public static final int img_bar=0x7f0a0008;
+        public static final int img_pan=0x7f0a0005;
+        public static final int item_button=0x7f0a0009;
+        public static final int myGridView=0x7f0a0001;
+        public static final int selected_container=0x7f0a0000;
+        public static final int textView1=0x7f0a0003;
+        public static final int tv_coins=0x7f0a000d;
     }
     public static final class layout {
         public static final int activity_main=0x7f030000;
