@@ -7,7 +7,6 @@ import java.util.TimerTask;
 import android.app.Activity;
 import android.os.Bundle;
 import android.os.Handler;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -23,26 +22,33 @@ import android.widget.LinearLayout.LayoutParams;
 
 import com.imooc.crazyguessmusic.R;
 import com.imooc.crazyguessmusic.R.color;
+import com.imooc.crazyguessmusic.data.Const;
 import com.imooc.crazyguessmusic.modle.IWordClickListener;
+import com.imooc.crazyguessmusic.modle.Song;
 import com.imooc.crazyguessmusic.modle.WordButton;
 import com.imooc.crazyguessmusic.myUi.MyGridView;
 import com.imooc.crazyguessmusic.util.ViewUtil;
 
-public class MainActivity extends Activity implements OnClickListener,IWordClickListener {
+public class MainActivity extends Activity implements OnClickListener,
+		IWordClickListener {
 
 	private Animation mPanAnim, mBar_in, mBar_out;
 	private ImageButton mIbtn_play;
 	private ImageView mImg_pan, mImg_bar;
 	private MyGridView mMyGridView;
-	//已选择文字信息存储容器
+	// 已选择文字信息存储容器
 	private ArrayList<WordButton> mWordSelected;
-	//是否正在播放的标志位
+	// 是否正在播放的标志位
 	private boolean isRunning = false;
-	//已选择文字显示容器
+	// 已选择文字显示容器
 	private LinearLayout mSelectedContainer;
-	
+
 	private Timer mTimer;
-	//存储按钮数据的list
+	// 当前关的歌曲信息
+	private Song mCurrentStageSong;
+	// 当前关卡信息
+	private int mCurrentStageIndex = -1;
+	// 存储按钮数据的list
 	private ArrayList<WordButton> mArrayList = new ArrayList<WordButton>();
 
 	@Override
@@ -72,21 +78,22 @@ public class MainActivity extends Activity implements OnClickListener,IWordClick
 		// 设置点击事件
 		mIbtn_play.setOnClickListener(this);
 		mMyGridView.setOnWordClickListener(this);
-		//初始化数据
+		// 初始化数据
 		initCurrentStageData();
 	}
+
 	/**
 	 * 初始化当前关卡
 	 */
-	public void initCurrentStageData(){
-		//获取数据
+	public void initCurrentStageData() {
+		// 获取数据
 		mArrayList = getButtonList();
-		//更新MyGridView
+		// 更新MyGridView
 		mMyGridView.updateData(mArrayList);
-		//更新已选择文字框数据
+		// 更新已选择文字框数据
 		updateSelectedContainer();
 	}
-	
+
 	/**
 	 * 按钮点击事件的实现
 	 */
@@ -98,12 +105,13 @@ public class MainActivity extends Activity implements OnClickListener,IWordClick
 			break;
 		}
 	}
+
 	/**
 	 * 用来实现更新UI
 	 */
-	Handler mHandler = new Handler(){
+	Handler mHandler = new Handler() {
 		public void handleMessage(android.os.Message msg) {
-			if(msg.what==1){
+			if (msg.what == 1) {
 				mIbtn_play.setVisibility(View.GONE);
 				mTimer.cancel();
 			}
@@ -111,16 +119,16 @@ public class MainActivity extends Activity implements OnClickListener,IWordClick
 	};
 
 	/**
-	 * 点击播放按钮后的操作
-	 * 通过Timer来实现点击后延迟0.5秒再隐藏按钮
+	 * 点击播放按钮后的操作 通过Timer来实现点击后延迟0.5秒再隐藏按钮
 	 */
 	private void handlePlayButton() {
 		mTimer = new Timer();
-		if(!isRunning){
+		if (!isRunning) {
 			mImg_bar.startAnimation(mBar_in);
-			//隐藏播放按钮
+
+			// 隐藏播放按钮
 			mTimer.schedule(new TimerTask() {
-				
+
 				@Override
 				public void run() {
 					mHandler.sendEmptyMessage(1);
@@ -129,28 +137,30 @@ public class MainActivity extends Activity implements OnClickListener,IWordClick
 			isRunning = true;
 		}
 	}
-	
+
 	/**
 	 * 更新当前关卡的待选择文字
 	 */
 	public void updateSelectedContainer() {
 		mWordSelected = this.initSelectedWords();
-		LayoutParams lp = new LayoutParams(-2,-2);
-		//设置水平居中
+		LayoutParams lp = new LayoutParams(-2, -2);
+		// 设置水平居中
 		mSelectedContainer.setGravity(Gravity.CENTER_HORIZONTAL);
-		//给LinearLayout设置View
-		for(int i=0;i<mWordSelected.size();i++){
+		// 给LinearLayout设置View
+		for (int i = 0; i < mWordSelected.size(); i++) {
 			mSelectedContainer.addView(mWordSelected.get(i).getmButton(), lp);
 		}
 	}
+
 	/**
 	 * 初始化待选文字框
+	 * 
 	 * @return
 	 */
-	public ArrayList<WordButton> getButtonList(){
-		//获得所有待选文字 TODO
+	public ArrayList<WordButton> getButtonList() {
+		// 获得所有待选文字 TODO
 		ArrayList<WordButton> data = new ArrayList<WordButton>();
-		for(int i=0;i<24;i++){
+		for (int i = 0; i < 24; i++) {
 			WordButton button = new WordButton();
 			button.setmIndex(i);
 			button.setmWordString("测");
@@ -158,14 +168,18 @@ public class MainActivity extends Activity implements OnClickListener,IWordClick
 		}
 		return data;
 	}
+
 	/**
 	 * 初始化已选择文字
+	 * 
 	 * @return
 	 */
-	public ArrayList<WordButton> initSelectedWords(){
+	public ArrayList<WordButton> initSelectedWords() {
 		ArrayList<WordButton> data = new ArrayList<WordButton>();
-		for(int i=0;i<4;i++){
-			View view = ViewUtil.getInflatedView(MainActivity.this, R.layout.self_ui_gridview_item);
+		mCurrentStageSong = getCurrentStageSong(++mCurrentStageIndex);
+		for (int i = 0; i < mCurrentStageSong.getSongNameLength(); i++) {
+			View view = ViewUtil.getInflatedView(MainActivity.this,
+					R.layout.self_ui_gridview_item);
 			WordButton holder = new WordButton();
 			holder.setmButton((Button) view.findViewById(R.id.item_button));
 			Button mButton = holder.getmButton();
@@ -173,10 +187,24 @@ public class MainActivity extends Activity implements OnClickListener,IWordClick
 			mButton.setText("");
 			holder.setmIsVisiable(false);
 			mButton.setBackgroundResource(R.drawable.game_wordblack);
-			
+
 			data.add(holder);
 		}
 		return data;
+	}
+
+	/**
+	 * 获取当前关卡歌曲信息
+	 * 
+	 * @param mCurrentStageIndex2
+	 * @return
+	 */
+	private Song getCurrentStageSong(int mCurrentStageIndex) {
+		Song song = new Song();
+		String[] songinfo = Const.SONG_INFO[mCurrentStageIndex];
+		song.setSongFileName(songinfo[Const.INDEX_FILE_NAME]);
+		song.setSongName(songinfo[Const.INDEX_SONG_NAME]);
+		return song;
 	}
 
 	/**
@@ -234,7 +262,7 @@ public class MainActivity extends Activity implements OnClickListener,IWordClick
 
 		@Override
 		public void onAnimationEnd(Animation animation) {
-			//播放杆动画完成后显示Play按钮
+			// 播放杆动画完成后显示Play按钮
 			isRunning = false;
 			mIbtn_play.setVisibility(View.VISIBLE);
 		}
@@ -252,13 +280,14 @@ public class MainActivity extends Activity implements OnClickListener,IWordClick
 		}
 
 	}
-	
+
 	@Override
 	protected void onPause() {
 		mImg_pan.clearAnimation();
 		mImg_bar.clearAnimation();
 		super.onPause();
 	}
+
 	/**
 	 * 待选框点击事件接口实现方法
 	 */
