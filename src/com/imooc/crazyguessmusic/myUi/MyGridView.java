@@ -1,6 +1,7 @@
 package com.imooc.crazyguessmusic.myUi;
 
 import java.util.ArrayList;
+import java.util.Collections;
 
 import android.content.Context;
 import android.util.AttributeSet;
@@ -23,6 +24,7 @@ public class MyGridView extends GridView{
 	private Context mContext;
 	private Animation mScaleAnimation;
 	private IWordClickListener mWordClickListener;
+	public static final int SONG_NAMES_COUNT = 24;
 
 	public MyGridView(Context context, AttributeSet attrs) {
 		super(context, attrs);
@@ -38,6 +40,8 @@ public class MyGridView extends GridView{
 	 */
 	public void updateData(ArrayList<WordButton> list) {
 		mButtonList = list;
+		//打乱顺序
+		Collections.shuffle(mButtonList);
 		setAdapter(mAdapter);
 	}
 

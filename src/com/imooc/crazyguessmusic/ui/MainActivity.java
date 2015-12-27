@@ -7,6 +7,7 @@ import java.util.TimerTask;
 import android.app.Activity;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -27,6 +28,7 @@ import com.imooc.crazyguessmusic.modle.IWordClickListener;
 import com.imooc.crazyguessmusic.modle.Song;
 import com.imooc.crazyguessmusic.modle.WordButton;
 import com.imooc.crazyguessmusic.myUi.MyGridView;
+import com.imooc.crazyguessmusic.util.RandomCharUitl;
 import com.imooc.crazyguessmusic.util.ViewUtil;
 
 public class MainActivity extends Activity implements OnClickListener,
@@ -86,12 +88,12 @@ public class MainActivity extends Activity implements OnClickListener,
 	 * 初始化当前关卡
 	 */
 	public void initCurrentStageData() {
+		// 更新已选择文字框数据
+		updateSelectedContainer();
 		// 获取数据
 		mArrayList = getButtonList();
 		// 更新MyGridView
 		mMyGridView.updateData(mArrayList);
-		// 更新已选择文字框数据
-		updateSelectedContainer();
 	}
 
 	/**
@@ -139,7 +141,7 @@ public class MainActivity extends Activity implements OnClickListener,
 	}
 
 	/**
-	 * 更新当前关卡的待选择文字
+	 * 更新当前关卡的已选择文字
 	 */
 	public void updateSelectedContainer() {
 		mWordSelected = this.initSelectedWords();
@@ -153,20 +155,38 @@ public class MainActivity extends Activity implements OnClickListener,
 	}
 
 	/**
-	 * 初始化待选文字框
+	 * 初始化待选文字数据
 	 * 
 	 * @return
 	 */
 	public ArrayList<WordButton> getButtonList() {
-		// 获得所有待选文字 TODO
 		ArrayList<WordButton> data = new ArrayList<WordButton>();
-		for (int i = 0; i < 24; i++) {
+		// 获得所有待选文字 
+		String[] words = generateWords();
+		//设置歌曲名字
+		for(int i = 0;i<MyGridView.SONG_NAMES_COUNT;i++){
 			WordButton button = new WordButton();
 			button.setmIndex(i);
-			button.setmWordString("测");
+			button.setmWordString(words[i]);
 			data.add(button);
 		}
 		return data;
+	}
+	/**
+	 * 初始化所有待选文字
+	 * @return
+	 */
+	public String[] generateWords() {
+		String[] words = new String[MyGridView.SONG_NAMES_COUNT];
+		// 将歌曲名字添加进数组
+		for (int i = 0; i < mCurrentStageSong.getSongNameLength(); i++) {
+			words[i] = mCurrentStageSong.getCharacter()[i] + "";
+		}
+		// 将其他随机文字存入数组
+		for (int i = mCurrentStageSong.getSongNameLength(); i < MyGridView.SONG_NAMES_COUNT; i++) {
+			words[i] = RandomCharUitl.getRandomChar()+"";
+		}
+		return words;
 	}
 
 	/**
@@ -223,7 +243,6 @@ public class MainActivity extends Activity implements OnClickListener,
 
 		@Override
 		public void onAnimationStart(Animation animation) {
-			// TODO Auto-generated method stub
 
 		}
 
@@ -242,13 +261,11 @@ public class MainActivity extends Activity implements OnClickListener,
 
 		@Override
 		public void onAnimationRepeat(Animation animation) {
-			// TODO Auto-generated method stub
 
 		}
 
 		@Override
 		public void onAnimationStart(Animation animation) {
-			// TODO Auto-generated method stub
 
 		}
 
@@ -269,13 +286,11 @@ public class MainActivity extends Activity implements OnClickListener,
 
 		@Override
 		public void onAnimationRepeat(Animation animation) {
-			// TODO Auto-generated method stub
 
 		}
 
 		@Override
 		public void onAnimationStart(Animation animation) {
-			// TODO Auto-generated method stub
 
 		}
 
