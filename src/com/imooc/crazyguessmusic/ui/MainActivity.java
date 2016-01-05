@@ -4,7 +4,10 @@ import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -111,6 +114,7 @@ public class MainActivity extends Activity implements OnClickListener,
 	/**
 	 * 用来实现更新UI
 	 */
+	@SuppressLint("HandlerLeak")
 	Handler mHandler = new Handler() {
 		public void handleMessage(android.os.Message msg) {
 			if (msg.what == 1) {
@@ -150,12 +154,14 @@ public class MainActivity extends Activity implements OnClickListener,
 		mSelectedContainer.setGravity(Gravity.CENTER_HORIZONTAL);
 		// 给LinearLayout设置View
 		for (int i = 0; i < mWordSelected.size(); i++) {
-			mSelectedContainer.addView(mWordSelected.get(i).getmButton(), lp);
+			Button btn = mWordSelected.get(i).getmButton();
+			btn.setTextColor(Color.WHITE);
+			mSelectedContainer.addView(btn, lp);
 		}
 	}
 
 	/**
-	 * 初始化待选文字数据
+	 * 初始化已选文字数据
 	 * 
 	 * @return
 	 */
@@ -200,17 +206,38 @@ public class MainActivity extends Activity implements OnClickListener,
 		for (int i = 0; i < mCurrentStageSong.getSongNameLength(); i++) {
 			View view = ViewUtil.getInflatedView(MainActivity.this,
 					R.layout.self_ui_gridview_item);
-			WordButton holder = new WordButton();
+			final WordButton holder = new WordButton();
 			holder.setmButton((Button) view.findViewById(R.id.item_button));
-			Button mButton = holder.getmButton();
+			final Button mButton = holder.getmButton();
 			mButton.setTextColor(color.white);
 			mButton.setText("");
 			holder.setmIsVisiable(false);
 			mButton.setBackgroundResource(R.drawable.game_wordblack);
-
+			mButton.setOnClickListener(new OnClickListener() {
+				
+				@Override
+				public void onClick(View v) {
+					if(!"".equals(mButton.getText())){
+						//清除已选文字
+						clearTheAnswer(holder);
+					}
+				}
+			});
 			data.add(holder);
 		}
 		return data;
+	}
+	/**
+	 * 清除已选文字
+	 * @param wordButton
+	 */
+	protected void clearTheAnswer(WordButton wordButton) {
+		//隐藏被点击的已选答案
+		wordButton.getmButton().setText("");
+		wordButton.setmIsVisiable(false);
+		wordButton.setmWordString("");
+		//显示原来的按钮
+		setButtonVisibility(mArrayList.get(wordButton.getmIndex()), View.VISIBLE);
 	}
 
 	/**
@@ -308,6 +335,37 @@ public class MainActivity extends Activity implements OnClickListener,
 	 */
 	@Override
 	public void onWordClick(WordButton wordButton) {
-		wordButton.setmIsVisiable(false);
+		//点击待选区按钮，将文字设置到已选框中，并且属性为可见
+		setSelectedWord(wordButton);
+	}
+	private void setSelectedWord(WordButton button){
+		//遍历已选文字框，如果没有赋值，则赋予
+		for(int i=0;i<mCurrentStageSong.getSongNameLength();i++){
+			WordButton selectedButton = mWordSelected.get(i);
+			if(selectedButton.getmWordString().length()==0){
+				//设置Button文字信息
+				selectedButton.getmButton().setText(button.getmWordString());
+				//设置WordButton的属性
+				selectedButton.setmWordString(button.getmWordString());
+				//设置wordButton索引
+				selectedButton.setmIndex(button.getmIndex());
+				//设置Button可见性
+				setButtonVisibility(button,View.VISIBLE);
+				//设置被点击Button不可见
+				setButtonVisibility(button, View.INVISIBLE);
+				break;
+			}
+		}
+	}
+	/**
+	 * 设置WordButton可见性；
+	 * @param button
+	 * @param visible
+	 */
+	private void setButtonVisibility(WordButton button, int visible) {
+		//设置按钮可见性
+		button.getmButton().setVisibility(visible);
+		//设置按钮对象可见性属性
+		button.setmIsVisiable(visible==View.VISIBLE?true:false);
 	}
 }

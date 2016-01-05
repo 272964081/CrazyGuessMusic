@@ -70,12 +70,23 @@ public class MyGridView extends GridView{
 						R.layout.self_ui_gridview_item);
 				holder = mButtonList.get(position);
 				holder.setmIndex(position);
-				Button btn = (Button) view.findViewById(R.id.item_button);
+				if(holder.getmButton()==null){
+					Button btn = (Button) view.findViewById(R.id.item_button);
+					//设置View点击事件(观察者模式)
+					btn.setOnClickListener(new OnClickListener() {
+						@Override
+						public void onClick(View v) {
+							if(mWordClickListener!=null){
+								mWordClickListener.onWordClick(holder);
+							}
+						}
+					});
+					holder.setmButton(btn);
+				}
 				//设置按钮动画
 				mScaleAnimation = AnimationUtils.loadAnimation(mContext, R.anim.scale_button);
 				//设置动画延迟
 				mScaleAnimation.setStartOffset(position*100);
-				holder.setmButton(btn);
 				
 				view.setTag(holder);
 			} else {
@@ -84,19 +95,8 @@ public class MyGridView extends GridView{
 			// 给按钮设置他本身的文字
 			Button button = holder.getmButton();
 			button.setText(holder.getmWordString());
-			//设置View点击事件(观察者模式)
-			button.setOnClickListener(new OnClickListener() {
-				
-				@Override
-				public void onClick(View v) {
-					if(mWordClickListener!=null){
-						mWordClickListener.onWordClick(holder);
-					}
-				}
-			});
 			//开启动画
 			view.startAnimation(mScaleAnimation);
-			//点击事件
 			
 			return view;
 		}
