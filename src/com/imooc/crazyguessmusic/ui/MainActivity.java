@@ -10,7 +10,6 @@ import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -25,7 +24,6 @@ import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
 
 import com.imooc.crazyguessmusic.R;
-import com.imooc.crazyguessmusic.R.color;
 import com.imooc.crazyguessmusic.data.Const;
 import com.imooc.crazyguessmusic.modle.IWordClickListener;
 import com.imooc.crazyguessmusic.modle.Song;
@@ -37,10 +35,25 @@ import com.imooc.crazyguessmusic.util.ViewUtil;
 public class MainActivity extends Activity implements OnClickListener,
 		IWordClickListener {
 
+	/** 检测答案不完整 */
+	public static final int MSG_ANSWER_LACK = 1;
+	/** 检测答案正确 */
+	public static final int MSG_ANSWER_RIGHT = 2;
+	/** 检测答案错误 */
+	public static final int MSG_ANSWER_WRONG = 3;
+	/** 取消播放按钮的显示 */
+	public static final int MSG_DISPLAY_CANCEL = 4;
+	/** 文字闪烁延迟信息 */
+	public static final int MSG_DISPLAY_FLASH = 5;
+	/** 文字闪烁次数 */
+	public static final int WORDS_FLASH_COUNTS = 6;
+	// 文字闪烁标志位
+	private boolean isFlash;
 	private Animation mPanAnim, mBar_in, mBar_out;
 	private ImageButton mIbtn_play;
 	private ImageView mImg_pan, mImg_bar;
 	private MyGridView mMyGridView;
+	private View passView;
 	// 已选择文字信息存储容器
 	private ArrayList<WordButton> mWordSelected;
 	// 是否正在播放的标志位
@@ -48,7 +61,7 @@ public class MainActivity extends Activity implements OnClickListener,
 	// 已选择文字显示容器
 	private LinearLayout mSelectedContainer;
 
-	private Timer mTimer;
+	private Timer  mTimer_flash;
 	// 当前关的歌曲信息
 	private Song mCurrentStageSong;
 	// 当前关卡信息
@@ -106,7 +119,8 @@ public class MainActivity extends Activity implements OnClickListener,
 	public void onClick(View v) {
 		switch (v.getId()) {
 		case R.id.btn_play:
-			handlePlayButton();
+			//TODO  点击播放后的操作
+			mImg_bar.startAnimation(mBar_in);
 			break;
 		}
 	}
@@ -117,32 +131,71 @@ public class MainActivity extends Activity implements OnClickListener,
 	@SuppressLint("HandlerLeak")
 	Handler mHandler = new Handler() {
 		public void handleMessage(android.os.Message msg) {
-			if (msg.what == 1) {
-				mIbtn_play.setVisibility(View.GONE);
-				mTimer.cancel();
+
+			switch (msg.what) {
+			case MSG_ANSWER_LACK:
+
+				// 答案不完整
+				for (int i = 0; i < mWordSelected.size(); i++) {
+					mWordSelected.get(i).getmButton().setTextColor(Color.WHITE);
+				}
+				break;
+			case MSG_ANSWER_RIGHT:
+				// 答案正确
+				handlePassEvent();
+				break;
+			case MSG_ANSWER_WRONG:
+				// 答案错误，发送文字闪烁信息
+				// 初始化标志位
+				isFlash = false;
+				flashDelayMessage();
+				break;
+			case MSG_DISPLAY_FLASH:
+				// 实现文字闪烁
+				flashWord();
+				break;
 			}
 		};
 	};
+	/**
+	 * 过关事件处理
+	 */
+	private void handlePassEvent(){
+		passView = findViewById(R.id.passView);
+		passView.setVisibility(View.VISIBLE);
+	}
 
 	/**
-	 * 点击播放按钮后的操作 通过Timer来实现点击后延迟0.5秒再隐藏按钮
+	 * 文字闪烁实现方法
 	 */
-	private void handlePlayButton() {
-		mTimer = new Timer();
-		if (!isRunning) {
-			mImg_bar.startAnimation(mBar_in);
-
-			// 隐藏播放按钮
-			mTimer.schedule(new TimerTask() {
-
-				@Override
-				public void run() {
-					mHandler.sendEmptyMessage(1);
-				}
-			}, 600);
-			isRunning = true;
+	private void flashWord() {
+		for (int i = 0; i < mWordSelected.size(); i++) {
+			mWordSelected.get(i).getmButton()
+					.setTextColor(isFlash ? Color.RED : Color.WHITE);
 		}
+		isFlash = !isFlash;
 	}
+
+	/**
+	 * 文字闪烁发送方法；
+	 */
+	private void flashDelayMessage() {
+		mTimer_flash = new Timer();
+		mTimer_flash.schedule(new TimerTask() {
+			int counts = 0;
+
+			@Override
+			public void run() {
+				if (++counts > WORDS_FLASH_COUNTS) {
+					// Log.i("lang", "run return: "+counts);
+					mTimer_flash.cancel();
+					return;
+				}
+				mHandler.sendEmptyMessage(MSG_DISPLAY_FLASH);
+			}
+		}, 0, 150);
+	}
+
 
 	/**
 	 * 更新当前关卡的已选择文字
@@ -167,10 +220,10 @@ public class MainActivity extends Activity implements OnClickListener,
 	 */
 	public ArrayList<WordButton> getButtonList() {
 		ArrayList<WordButton> data = new ArrayList<WordButton>();
-		// 获得所有待选文字 
+		// 获得所有待选文字
 		String[] words = generateWords();
-		//设置歌曲名字
-		for(int i = 0;i<MyGridView.SONG_NAMES_COUNT;i++){
+		// 设置歌曲名字
+		for (int i = 0; i < MyGridView.SONG_NAMES_COUNT; i++) {
 			WordButton button = new WordButton();
 			button.setmIndex(i);
 			button.setmWordString(words[i]);
@@ -178,8 +231,10 @@ public class MainActivity extends Activity implements OnClickListener,
 		}
 		return data;
 	}
+
 	/**
 	 * 初始化所有待选文字
+	 * 
 	 * @return
 	 */
 	public String[] generateWords() {
@@ -190,7 +245,7 @@ public class MainActivity extends Activity implements OnClickListener,
 		}
 		// 将其他随机文字存入数组
 		for (int i = mCurrentStageSong.getSongNameLength(); i < MyGridView.SONG_NAMES_COUNT; i++) {
-			words[i] = RandomCharUitl.getRandomChar()+"";
+			words[i] = RandomCharUitl.getRandomChar() + "";
 		}
 		return words;
 	}
@@ -209,17 +264,20 @@ public class MainActivity extends Activity implements OnClickListener,
 			final WordButton holder = new WordButton();
 			holder.setmButton((Button) view.findViewById(R.id.item_button));
 			final Button mButton = holder.getmButton();
-			mButton.setTextColor(color.white);
+			mButton.setTextColor(Color.WHITE);
 			mButton.setText("");
 			holder.setmIsVisiable(false);
 			mButton.setBackgroundResource(R.drawable.game_wordblack);
+
 			mButton.setOnClickListener(new OnClickListener() {
-				
+
 				@Override
 				public void onClick(View v) {
-					if(!"".equals(mButton.getText())){
-						//清除已选文字
+					if (!"".equals(mButton.getText())) {
+						// 清除已选文字
 						clearTheAnswer(holder);
+						// 调用此方法，为将文字颜色还原成白色
+						checkTheAnswer();
 					}
 				}
 			});
@@ -227,17 +285,20 @@ public class MainActivity extends Activity implements OnClickListener,
 		}
 		return data;
 	}
+
 	/**
 	 * 清除已选文字
+	 * 
 	 * @param wordButton
 	 */
 	protected void clearTheAnswer(WordButton wordButton) {
-		//隐藏被点击的已选答案
+		// 隐藏被点击的已选答案
 		wordButton.getmButton().setText("");
 		wordButton.setmIsVisiable(false);
 		wordButton.setmWordString("");
-		//显示原来的按钮
-		setButtonVisibility(mArrayList.get(wordButton.getmIndex()), View.VISIBLE);
+		// 显示原来的按钮
+		setButtonVisibility(mArrayList.get(wordButton.getmIndex()),
+				View.VISIBLE);
 	}
 
 	/**
@@ -284,6 +345,7 @@ public class MainActivity extends Activity implements OnClickListener,
 		@Override
 		public void onAnimationEnd(Animation animation) {
 			mImg_pan.startAnimation(mPanAnim);
+			mIbtn_play.setVisibility(View.GONE);
 		}
 
 		@Override
@@ -299,7 +361,7 @@ public class MainActivity extends Activity implements OnClickListener,
 	}
 
 	/**
-	 * 播放器退出动画监听器
+	 * 播放杆退出动画监听器
 	 *
 	 */
 	class BarOutListener implements AnimationListener {
@@ -335,37 +397,76 @@ public class MainActivity extends Activity implements OnClickListener,
 	 */
 	@Override
 	public void onWordClick(WordButton wordButton) {
-		//点击待选区按钮，将文字设置到已选框中，并且属性为可见
+		// 点击待选区按钮，将文字设置到已选框中，并且属性为可见
 		setSelectedWord(wordButton);
+		// 检测答案状态
+		checkTheAnswer();
+
 	}
-	private void setSelectedWord(WordButton button){
-		//遍历已选文字框，如果没有赋值，则赋予
-		for(int i=0;i<mCurrentStageSong.getSongNameLength();i++){
+
+	private void setSelectedWord(WordButton button) {
+		// 遍历已选文字框，如果没有赋值，则赋予
+		for (int i = 0; i < mCurrentStageSong.getSongNameLength(); i++) {
 			WordButton selectedButton = mWordSelected.get(i);
-			if(selectedButton.getmWordString().length()==0){
-				//设置Button文字信息
+			if (selectedButton.getmWordString().length() == 0) {
+				// 设置Button文字信息
 				selectedButton.getmButton().setText(button.getmWordString());
-				//设置WordButton的属性
+				// 初始化文字颜色为白色
+				selectedButton.getmButton().setTextColor(Color.WHITE);
+				// 设置WordButton的属性
 				selectedButton.setmWordString(button.getmWordString());
-				//设置wordButton索引
+				// 设置wordButton索引
 				selectedButton.setmIndex(button.getmIndex());
-				//设置Button可见性
-				setButtonVisibility(button,View.VISIBLE);
-				//设置被点击Button不可见
+				// 设置Button可见性
+				setButtonVisibility(button, View.VISIBLE);
+				// 设置被点击Button不可见
 				setButtonVisibility(button, View.INVISIBLE);
 				break;
 			}
 		}
 	}
+
 	/**
 	 * 设置WordButton可见性；
+	 * 
 	 * @param button
 	 * @param visible
 	 */
 	private void setButtonVisibility(WordButton button, int visible) {
-		//设置按钮可见性
+		// 设置按钮可见性
 		button.getmButton().setVisibility(visible);
-		//设置按钮对象可见性属性
-		button.setmIsVisiable(visible==View.VISIBLE?true:false);
+		// 设置按钮对象可见性属性
+		button.setmIsVisiable(visible == View.VISIBLE ? true : false);
+	}
+
+	private void checkTheAnswer() {
+		// 1.检测答案是否完整
+		for (int i = 0; i < mWordSelected.size(); i++) {
+			if (mWordSelected.get(i).getmWordString().length() == 0) {
+				// 发送不完整消息
+				mHandler.sendEmptyMessage(MSG_ANSWER_LACK);
+				return;
+			}
+		}
+		// 2.判断答案是否正确
+		// 2.1提取答案
+		StringBuffer sb = new StringBuffer();
+		for (WordButton wordButton : mWordSelected) {
+			sb.append(wordButton.getmWordString());
+		}
+		// 2.2比较答案
+		if (sb.toString().equals(mCurrentStageSong.getmSongName())) {
+			// 发送正确消息
+			mHandler.sendEmptyMessage(MSG_ANSWER_RIGHT);
+		} else {
+			// 发送错误消息
+			mHandler.sendEmptyMessage(MSG_ANSWER_WRONG);
+		}
+
+	}
+
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
 	}
 }

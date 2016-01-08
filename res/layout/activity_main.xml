@@ -1,8 +1,7 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent" 
-    android:layout_gravity="center"
-    >
+    android:layout_height="match_parent"
+    android:layout_gravity="center" >
 
     <!-- frame -->
 
@@ -22,5 +21,9 @@
 
         <include layout="@layout/name_selecter" />
     </LinearLayout>
+
+    <!-- 过关页面 -->
+
+    <include layout="@layout/answer_pass_view" />
 
 </FrameLayout>
