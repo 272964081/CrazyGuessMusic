@@ -21,6 +21,8 @@
 
         <include layout="@layout/name_selecter" />
     </LinearLayout>
+    <!--浮动按钮  -->
+    <include layout="@layout/float_buttons"/>
 
     <!-- 过关页面 -->
 
