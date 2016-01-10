@@ -30,5 +30,15 @@ public class RandomCharUitl {
 		
 		return str.charAt(0);
 	}
+	/**
+	 * 获取一个随机整数
+	 * @param min 最小值
+	 * @param max 最大值
+	 * @return min--max 范围内的随机整数;
+	 */
+	public static int getRandomInt(int min,int max){
+		Random random = new Random();
+		return (int)(min+(random.nextInt(max)));
+	}
 
 }
