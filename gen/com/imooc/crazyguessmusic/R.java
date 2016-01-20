@@ -74,20 +74,19 @@ public final class R {
         public static final int selector_share_button=0x7f020027;
     }
     public static final class id {
-        public static final int action_settings=0x7f0b0019;
+        public static final int action_settings=0x7f0b0018;
         public static final int btn_delete_word=0x7f0b000b;
         public static final int btn_play=0x7f0b0012;
         public static final int btn_share=0x7f0b000d;
         public static final int btn_tip=0x7f0b000c;
-        public static final int btn_top_back=0x7f0b0016;
-        public static final int btn_top_coins=0x7f0b0017;
+        public static final int btn_top_back=0x7f0b0015;
+        public static final int btn_top_coins=0x7f0b0016;
         public static final int frameLayout1=0x7f0b0009;
-        public static final int gv_test=0x7f0b0015;
-        public static final int imageButton1=0x7f0b0007;
         public static final int imageButton2=0x7f0b0008;
         public static final int imageView1=0x7f0b0002;
         public static final int imageView2=0x7f0b0005;
         public static final int imageView4=0x7f0b0011;
+        public static final int imgBtn_next_stage=0x7f0b0007;
         public static final int img_bar=0x7f0b0013;
         public static final int img_pan=0x7f0b0010;
         public static final int item_button=0x7f0b0014;
@@ -95,11 +94,11 @@ public final class R {
         public static final int passView=0x7f0b0000;
         public static final int selected_container=0x7f0b000e;
         public static final int textView1=0x7f0b0001;
-        public static final int textView2=0x7f0b0003;
-        public static final int textView3=0x7f0b0004;
-        public static final int tv_coins=0x7f0b0018;
+        public static final int tv_coins=0x7f0b0017;
         public static final int tv_currentStage=0x7f0b000a;
+        public static final int tv_pass_index=0x7f0b0003;
         public static final int tv_reward_coins=0x7f0b0006;
+        public static final int tv_stage_songName=0x7f0b0004;
     }
     public static final class integer {
         public static final int pay_delete_word=0x7f060001;
@@ -112,8 +111,7 @@ public final class R {
         public static final int name_selecter=0x7f030003;
         public static final int pan_layout=0x7f030004;
         public static final int self_ui_gridview_item=0x7f030005;
-        public static final int test=0x7f030006;
-        public static final int top_bar=0x7f030007;
+        public static final int top_bar=0x7f030006;
     }
     public static final class menu {
         public static final int main=0x7f0a0000;

@@ -61,6 +61,12 @@ public class MainActivity extends Activity implements OnClickListener,
 	private View mPassView;
 	private TextView mTV_totalCoins;
 	private ImageButton mBtn_delete, mBtn_tips;
+	//当前关索引
+	private TextView mTV_StageIndex;
+	//当前关过关关数,过关歌曲
+	private TextView mPassStageIndex, mPassSongName;
+	//过关界面,下一关按钮
+	private ImageButton mBtn_nextStage;
 	// 是否正在播放的标志位
 	private boolean isRunning = false;
 	// 已选择文字显示容器
@@ -95,6 +101,7 @@ public class MainActivity extends Activity implements OnClickListener,
 		mTV_totalCoins = (TextView) findViewById(R.id.tv_coins);
 		mBtn_delete = (ImageButton) findViewById(R.id.btn_delete_word);
 		mBtn_tips = (ImageButton) findViewById(R.id.btn_tip);
+		mTV_StageIndex = (TextView) findViewById(R.id.tv_currentStage);
 		// 初始化动画
 		// 盘片动画
 		mPanAnim = AnimationUtils.loadAnimation(MainActivity.this,
@@ -132,6 +139,8 @@ public class MainActivity extends Activity implements OnClickListener,
 		mTV_totalCoins.setText(mCurrentCoins + "");
 		// 区分所有按钮
 		initAllWordButton();
+		//更新当前关索引
+		mTV_StageIndex.setText(mCurrentStageIndex+1+"");
 	}
 
 	/**
@@ -171,15 +180,16 @@ public class MainActivity extends Activity implements OnClickListener,
 	 * 处理删除错误答案事件
 	 */
 	private void handleDelete() {
-		// 减少金币
-		if (!handleCoins(-getDeleteCoins())) {
-			// TODO 金币不足,弹出对话框
-			return;
-		}
+
 		// 最大可删除文字数量
 		int maxCounts = MyGridView.SONG_NAMES_COUNT
 				- mCurrentStageSong.getSongNameLength();
 		if (MaxTimes < maxCounts) {
+			// 减少金币
+			if (!handleCoins(-getDeleteCoins())) {
+				// TODO 金币不足,弹出对话框
+				return;
+			}
 			// 删除一个非答案的文字
 			deleteNotAnwserWord();
 			MaxTimes++;
@@ -351,7 +361,39 @@ public class MainActivity extends Activity implements OnClickListener,
 	 */
 	private void handlePassEvent() {
 		mPassView = findViewById(R.id.passView);
-		mPassView.setVisibility(View.VISIBLE);
+		if (mPassView != null) {
+			// 显示过关索引和歌曲名
+			mPassView.setVisibility(View.VISIBLE);
+			//初始化控件
+			mPassStageIndex = (TextView) mPassView
+					.findViewById(R.id.tv_pass_index);
+			mPassStageIndex.setText(mCurrentStageIndex + 1 + "");
+			mBtn_nextStage = (ImageButton) mPassView.findViewById(R.id.imgBtn_next_stage);
+			//设置参数
+			mPassSongName = (TextView) mPassView
+					.findViewById(R.id.tv_stage_songName);
+
+			mPassSongName.setText(mCurrentStageSong.getmSongName());
+			//添加点击事件
+			mBtn_nextStage.setOnClickListener(new OnClickListener() {
+				
+				@Override
+				public void onClick(View v) {
+					if(isPassApp()){
+						//TODO 通关界面
+					}else{
+						//TODO 加载下一关
+						mPassView.setVisibility(View.GONE);
+						initCurrentStageData();
+					}
+				}
+			});
+		}
+
+	}
+	
+	private boolean isPassApp(){
+		return mCurrentStageIndex==Const.SONG_INFO.length;
 	}
 
 	/**
@@ -392,6 +434,7 @@ public class MainActivity extends Activity implements OnClickListener,
 		LayoutParams lp = new LayoutParams(-2, -2);
 		// 设置水平居中
 		mSelectedContainer.setGravity(Gravity.CENTER_HORIZONTAL);
+		mSelectedContainer.removeAllViews();
 		// 给LinearLayout设置View
 		for (int i = 0; i < mWordSelected.size(); i++) {
 			Button btn = mWordSelected.get(i).getmButton();
