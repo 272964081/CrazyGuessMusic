@@ -1,6 +1,7 @@
 package com.imooc.crazyguessmusic.ui;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -224,6 +225,7 @@ public class MainActivity extends Activity implements OnClickListener,
 		// 获取所有非答案的按钮
 		mNotAnswerList = new ArrayList<WordButton>();
 		mIsAnswerList = new ArrayList<WordButton>();
+		List<WordButton> listToRemove = new ArrayList<WordButton>();
 		mNotAnswerList.addAll(mAllForSelectList);
 		for (int i = 0; i < mNotAnswerList.size(); i++) {
 			for (int j = 0; j < mCurrentSongName.length; j++) {
@@ -231,11 +233,13 @@ public class MainActivity extends Activity implements OnClickListener,
 						.contains(mCurrentSongName[j] + "")) {
 					// 将是答案的按钮对象添加进答案容器
 					mIsAnswerList.add(mNotAnswerList.get(i));
-					// 将不是答案的按钮对象从非答案容器中移除
-					mNotAnswerList.remove(i);
+					//此处必须将要移除的对象存入一个List之后用removeAll方法移除，逐个移除会造成原List重排(减少)，然后越界。
+					listToRemove.add(mNotAnswerList.get(i));
 				}
 			}
 		}
+		// 将不是答案的按钮对象从非答案容器中移除
+		mNotAnswerList.removeAll(listToRemove);
 	}
 
 	/**
@@ -393,7 +397,7 @@ public class MainActivity extends Activity implements OnClickListener,
 	}
 	
 	private boolean isPassApp(){
-		return mCurrentStageIndex==Const.SONG_INFO.length;
+		return mCurrentStageIndex==Const.SONG_INFO.length-1;
 	}
 
 	/**
