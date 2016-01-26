@@ -384,9 +384,10 @@ public class MainActivity extends Activity implements OnClickListener,
 				@Override
 				public void onClick(View v) {
 					if(isPassApp()){
-						//TODO 通关界面
+						// 通关界面
+						ViewUtil.startActivity(MainActivity.this, AllPassViewActivity.class);
 					}else{
-						//TODO 加载下一关
+						// 加载下一关
 						mPassView.setVisibility(View.GONE);
 						initCurrentStageData();
 					}
