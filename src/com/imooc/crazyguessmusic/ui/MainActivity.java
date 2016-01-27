@@ -2,13 +2,11 @@ package com.imooc.crazyguessmusic.ui;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
@@ -30,6 +28,7 @@ import android.widget.TextView;
 
 import com.imooc.crazyguessmusic.R;
 import com.imooc.crazyguessmusic.data.Const;
+import com.imooc.crazyguessmusic.modle.IAlertDialogClickListener;
 import com.imooc.crazyguessmusic.modle.IWordClickListener;
 import com.imooc.crazyguessmusic.modle.Song;
 import com.imooc.crazyguessmusic.modle.WordButton;
@@ -52,6 +51,10 @@ public class MainActivity extends Activity implements OnClickListener,
 	public static final int MSG_DISPLAY_FLASH = 5;
 	/** 文字闪烁次数 */
 	public static final int WORDS_FLASH_COUNTS = 6;
+	/** 对话框类型ID */
+	public static final int ID_ALERT_DIALOG_DELETE = 1;
+	public static final int ID_ALERT_DIALOG_TIP = 2;
+	public static final int ID_ALERT_DIALOG_LACK_COINS = 3;
 	// 文字闪烁标志位
 	private boolean isFlash;
 	// 控件
@@ -62,14 +65,12 @@ public class MainActivity extends Activity implements OnClickListener,
 	private View mPassView;
 	private TextView mTV_totalCoins;
 	private ImageButton mBtn_delete, mBtn_tips;
-	//当前关索引
+	// 当前关索引
 	private TextView mTV_StageIndex;
-	//当前关过关关数,过关歌曲
+	// 当前关过关关数,过关歌曲
 	private TextView mPassStageIndex, mPassSongName;
-	//过关界面,下一关按钮
+	// 过关界面,下一关按钮
 	private ImageButton mBtn_nextStage;
-	// 是否正在播放的标志位
-	private boolean isRunning = false;
 	// 已选择文字显示容器
 	private LinearLayout mSelectedContainer;
 
@@ -140,8 +141,8 @@ public class MainActivity extends Activity implements OnClickListener,
 		mTV_totalCoins.setText(mCurrentCoins + "");
 		// 区分所有按钮
 		initAllWordButton();
-		//更新当前关索引
-		mTV_StageIndex.setText(mCurrentStageIndex+1+"");
+		// 更新当前关索引
+		mTV_StageIndex.setText(mCurrentStageIndex + 1 + "");
 	}
 
 	/**
@@ -181,22 +182,7 @@ public class MainActivity extends Activity implements OnClickListener,
 	 * 处理删除错误答案事件
 	 */
 	private void handleDelete() {
-
-		// 最大可删除文字数量
-		int maxCounts = MyGridView.SONG_NAMES_COUNT
-				- mCurrentStageSong.getSongNameLength();
-		if (MaxTimes < maxCounts) {
-			// 减少金币
-			if (!handleCoins(-getDeleteCoins())) {
-				// TODO 金币不足,弹出对话框
-				return;
-			}
-			// 删除一个非答案的文字
-			deleteNotAnwserWord();
-			MaxTimes++;
-		} else {
-			// TODO 超出提示范围
-		}
+		showConfirmAlertDialog(ID_ALERT_DIALOG_DELETE);
 	}
 
 	/**
@@ -233,7 +219,7 @@ public class MainActivity extends Activity implements OnClickListener,
 						.contains(mCurrentSongName[j] + "")) {
 					// 将是答案的按钮对象添加进答案容器
 					mIsAnswerList.add(mNotAnswerList.get(i));
-					//此处必须将要移除的对象存入一个List之后用removeAll方法移除，逐个移除会造成原List重排(减少)，然后越界。
+					// 此处必须将要移除的对象存入一个List之后用removeAll方法移除，逐个移除会造成原List重排(减少)，然后越界。
 					listToRemove.add(mNotAnswerList.get(i));
 				}
 			}
@@ -247,38 +233,13 @@ public class MainActivity extends Activity implements OnClickListener,
 	 */
 	private void handleTipAnswer() {
 
-		// 找到可用的空缺位置
-		boolean isFindPosition = false;
-		// 添加按钮进已选文字
-		for (int i = 0; i < mWordSelected.size(); i++) {
-			if (mWordSelected.get(i).getmWordString().length() == 0) {
-				// 扣除金币
-				if (!handleCoins(-getTipsCoins())) {
-					return;
-				}
-				// 如果空缺,点击按钮
-				WordButton button = findButton(i);
-				if (button.getmButton().getVisibility() == View.VISIBLE) {
-					onWordClick(button);
-				} else {
-					Toast.makeText(MainActivity.this, "答案已被选择",
-							Toast.LENGTH_SHORT).show();
-				}
-				isFindPosition = true;
-				break;
-			}
-		}
-		// 如果没有找到可用位置,则闪烁提醒
-		if (!isFindPosition) {
-			flashDelayMessage();
-		}
+		showConfirmAlertDialog(ID_ALERT_DIALOG_TIP);
 	}
 
 	/**
 	 * 查找和正确答案对应的按钮
 	 * 
-	 * @param index
-	 *            第几个待填入按钮
+	 * @param index 第几个待填入按钮
 	 * @return 对应的WordButton
 	 */
 	private WordButton findButton(int index) {
@@ -321,10 +282,14 @@ public class MainActivity extends Activity implements OnClickListener,
 	/**
 	 * 从配置文件读取提示需要的金币 config.xml
 	 * 
-	 * @return
+	 * @returnO
 	 */
 	private int getTipsCoins() {
 		return this.getResources().getInteger(R.integer.pay_tip_anwser);
+	}
+	
+	private int getPassCoins(){
+		return this.getResources().getInteger(R.integer.get_pass_coins);
 	}
 
 	/**
@@ -368,25 +333,29 @@ public class MainActivity extends Activity implements OnClickListener,
 		if (mPassView != null) {
 			// 显示过关索引和歌曲名
 			mPassView.setVisibility(View.VISIBLE);
-			//初始化控件
+			// 初始化控件
 			mPassStageIndex = (TextView) mPassView
 					.findViewById(R.id.tv_pass_index);
 			mPassStageIndex.setText(mCurrentStageIndex + 1 + "");
-			mBtn_nextStage = (ImageButton) mPassView.findViewById(R.id.imgBtn_next_stage);
-			//设置参数
+			mBtn_nextStage = (ImageButton) mPassView
+					.findViewById(R.id.imgBtn_next_stage);
+			// 设置参数
 			mPassSongName = (TextView) mPassView
 					.findViewById(R.id.tv_stage_songName);
 
 			mPassSongName.setText(mCurrentStageSong.getmSongName());
-			//添加点击事件
+			// 增加过关奖励
+			mCurrentCoins+=getPassCoins();
+			// 添加点击事件
 			mBtn_nextStage.setOnClickListener(new OnClickListener() {
-				
+
 				@Override
 				public void onClick(View v) {
-					if(isPassApp()){
+					if (isPassApp()) {
 						// 通关界面
-						ViewUtil.startActivity(MainActivity.this, AllPassViewActivity.class);
-					}else{
+						ViewUtil.startActivity(MainActivity.this,
+								AllPassViewActivity.class);
+					} else {
 						// 加载下一关
 						mPassView.setVisibility(View.GONE);
 						initCurrentStageData();
@@ -396,9 +365,9 @@ public class MainActivity extends Activity implements OnClickListener,
 		}
 
 	}
-	
-	private boolean isPassApp(){
-		return mCurrentStageIndex==Const.SONG_INFO.length-1;
+
+	private boolean isPassApp() {
+		return mCurrentStageIndex == Const.SONG_INFO.length - 1;
 	}
 
 	/**
@@ -604,7 +573,6 @@ public class MainActivity extends Activity implements OnClickListener,
 		@Override
 		public void onAnimationEnd(Animation animation) {
 			// 播放杆动画完成后显示Play按钮
-			isRunning = false;
 			mIbtn_play.setVisibility(View.VISIBLE);
 		}
 
@@ -708,6 +676,108 @@ public class MainActivity extends Activity implements OnClickListener,
 			mHandler.sendEmptyMessage(MSG_ANSWER_WRONG);
 		}
 
+	}
+
+	// 对话框接口实现
+	// 删除答案
+	private IAlertDialogClickListener alertDialogDeleteListener = new IAlertDialogClickListener() {
+
+		@Override
+		public void onclick() {
+			//  删除一个错误答案
+			// 最大可删除文字数量
+			int maxCounts = MyGridView.SONG_NAMES_COUNT
+					- mCurrentStageSong.getSongNameLength();
+			if (MaxTimes < maxCounts) {
+				// 减少金币
+				if (!handleCoins(-getDeleteCoins())) {
+					// 金币不足,弹出对话框
+					showConfirmAlertDialog(ID_ALERT_DIALOG_LACK_COINS);
+					return;
+				}
+				// 删除一个非答案的文字
+				deleteNotAnwserWord();
+				MaxTimes++;
+			} else {
+				// 超出提示范围
+				Toast.makeText(MainActivity.this, "土豪,游戏不是这么玩的", Toast.LENGTH_SHORT).show();
+			}
+		}
+	};
+
+	// 提示答案
+	private IAlertDialogClickListener alertDialogTipListener = new IAlertDialogClickListener() {
+
+		@Override
+		public void onclick() {
+			//  提示正确答案
+			// 找到可用的空缺位置
+			boolean isFindPosition = false;
+			// 添加按钮进已选文字
+			for (int i = 0; i < mWordSelected.size(); i++) {
+				if (mWordSelected.get(i).getmWordString().length() == 0) {
+					// 扣除金币
+					if (!handleCoins(-getTipsCoins())) {
+						//显示金币不足对话框
+						showConfirmAlertDialog(ID_ALERT_DIALOG_LACK_COINS);
+						return;
+					}
+					// 如果空缺,点击按钮
+					WordButton button = findButton(i);
+					if (button.getmButton().getVisibility() == View.VISIBLE) {
+						onWordClick(button);
+					} else {
+						Toast.makeText(MainActivity.this, "答案已被选择",
+								Toast.LENGTH_SHORT).show();
+					}
+					isFindPosition = true;
+					break;
+				}
+			}
+			// 如果没有找到可用位置,则闪烁提醒
+			if (!isFindPosition) {
+				flashDelayMessage();
+			}
+
+		}
+	};
+
+	// 金币不足
+	private IAlertDialogClickListener alertDialogLackCoinsListener = new IAlertDialogClickListener() {
+
+		@Override
+		public void onclick() {
+			//  金币不足
+			Toast.makeText(MainActivity.this, "这功能老子还没开发", Toast.LENGTH_SHORT).show();
+
+		}
+	};
+
+	/**
+	 * 显示对话框方法
+	 * 
+	 * @param id
+	 */
+	public void showConfirmAlertDialog(int id) {
+		switch (id) {
+		case ID_ALERT_DIALOG_DELETE:
+			// 删除
+			ViewUtil.showAlertDialog(MainActivity.this, "是否花费"
+					+ getDeleteCoins() + "金币删除一个错误答案?",
+					alertDialogDeleteListener);
+			break;
+		case ID_ALERT_DIALOG_TIP:
+			// 提示
+			ViewUtil.showAlertDialog(MainActivity.this, "是否花费"
+					+ getTipsCoins() + "金币得到一个正确答案?",
+					alertDialogTipListener);
+			break;
+		case ID_ALERT_DIALOG_LACK_COINS:
+			// 金币不足
+			ViewUtil.showAlertDialog(MainActivity.this, "金币不足,是否进入商城充值?",
+					alertDialogLackCoinsListener);
+			break;
+		}
 	}
 
 	@Override

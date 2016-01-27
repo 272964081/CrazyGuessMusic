@@ -60,8 +60,7 @@ public class ViewUtil {
 				.findViewById(R.id.btn_dialogOk);
 		ImageButton btn_cancel = (ImageButton) alertDialogView
 				.findViewById(R.id.btn_dialogCancel);
-
-		if (mAlertDialog != null) {
+		if(tv_message!=null){
 			tv_message.setText(msg);
 		}
 

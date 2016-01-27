@@ -126,6 +126,7 @@ public final class R {
         public static final int tv_stage_songName=0x7f0b0008;
     }
     public static final class integer {
+        public static final int get_pass_coins=0x7f060002;
         public static final int pay_delete_word=0x7f060001;
         public static final int pay_tip_anwser=0x7f060000;
     }
