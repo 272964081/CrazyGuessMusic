@@ -2,6 +2,7 @@ package com.imooc.crazyguessmusic.util;
 
 import com.imooc.crazyguessmusic.R;
 import com.imooc.crazyguessmusic.modle.IAlertDialogClickListener;
+import com.imooc.crazyguessmusic.ui.MainActivity;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -27,9 +28,10 @@ public class ViewUtil {
 	public static View getInflatedView(Context context, int resoure) {
 		return LayoutInflater.from(context).inflate(resoure, null);
 	}
-	
+
 	/**
 	 * Activity之间跳转实现
+	 * 
 	 * @param context
 	 * @param desti
 	 */
@@ -41,15 +43,18 @@ public class ViewUtil {
 		Activity ac = (Activity) context;
 		ac.finish();
 	}
-	
+
 	/**
 	 * 显示对话框方法
+	 * 
 	 * @param context
-	 * @param msg  显示内容
-	 * @param listener OK按键接口实现
+	 * @param msg
+	 *            显示内容
+	 * @param listener
+	 *            OK按键接口实现
 	 */
 
-	public static void showAlertDialog(Context context, String msg,
+	public static void showAlertDialog(final Context context, String msg,
 			final IAlertDialogClickListener listener) {
 
 		AlertDialog.Builder buidler = new AlertDialog.Builder(context);
@@ -60,7 +65,7 @@ public class ViewUtil {
 				.findViewById(R.id.btn_dialogOk);
 		ImageButton btn_cancel = (ImageButton) alertDialogView
 				.findViewById(R.id.btn_dialogCancel);
-		if(tv_message!=null){
+		if (tv_message != null) {
 			tv_message.setText(msg);
 		}
 
@@ -71,7 +76,8 @@ public class ViewUtil {
 				if (mAlertDialog != null) {
 					mAlertDialog.cancel();
 				}
-				if(listener!=null){
+				if (listener != null) {
+					MyPlayer.playTone(context, MyPlayer.TONE_INDEX_ENTER);
 					listener.onclick();
 				}
 			}
@@ -82,14 +88,15 @@ public class ViewUtil {
 			@Override
 			public void onClick(View arg0) {
 				if (mAlertDialog != null) {
+					MyPlayer.playTone(context, MyPlayer.TONE_INDEX_CANCEL);
 					mAlertDialog.cancel();
 				}
 			}
 		});
-		//创建对话框
+		// 创建对话框
 		buidler.setView(alertDialogView);
 		mAlertDialog = buidler.create();
-		//显示对话框
+		// 显示对话框
 		mAlertDialog.show();
 	}
 

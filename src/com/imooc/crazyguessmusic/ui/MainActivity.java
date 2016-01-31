@@ -33,6 +33,7 @@ import com.imooc.crazyguessmusic.modle.IWordClickListener;
 import com.imooc.crazyguessmusic.modle.Song;
 import com.imooc.crazyguessmusic.modle.WordButton;
 import com.imooc.crazyguessmusic.myUi.MyGridView;
+import com.imooc.crazyguessmusic.util.MyPlayer;
 import com.imooc.crazyguessmusic.util.RandomCharUitl;
 import com.imooc.crazyguessmusic.util.ViewUtil;
 
@@ -125,6 +126,7 @@ public class MainActivity extends Activity implements OnClickListener,
 		mBtn_tips.setOnClickListener(this);
 		// 初始化数据
 		initCurrentStageData();
+
 	}
 
 	/**
@@ -139,10 +141,12 @@ public class MainActivity extends Activity implements OnClickListener,
 		mMyGridView.updateData(mAllForSelectList);
 		// 更新金币信息
 		mTV_totalCoins.setText(mCurrentCoins + "");
-		// 区分所有按钮
-		initAllWordButton();
 		// 更新当前关索引
 		mTV_StageIndex.setText(mCurrentStageIndex + 1 + "");
+		// 区分所有按钮
+		initAllWordButton();
+		// 自动播放音乐
+		handlePlay();
 	}
 
 	/**
@@ -171,8 +175,10 @@ public class MainActivity extends Activity implements OnClickListener,
 	 * 处理点击播放后的事件
 	 */
 	private void handlePlay() {
-		// TODO Auto-generated method stub
 		mImg_bar.startAnimation(mBar_in);
+		// 播放音乐
+		MyPlayer.playSong(MainActivity.this,
+				mCurrentStageSong.getSongFileName());
 	}
 
 	// 提示的最多次数
@@ -192,7 +198,6 @@ public class MainActivity extends Activity implements OnClickListener,
 		// 设置一个随机按钮为不可见
 		while (true) {
 			int ran = RandomCharUitl.getRandomInt(0, mNotAnswerList.size());
-			Log.i("lang", "random:" + ran);
 			WordButton buf = mNotAnswerList.get(ran);
 			if (buf.getmButton().getVisibility() == View.VISIBLE) {
 				setButtonVisibility(buf, View.INVISIBLE);
@@ -239,7 +244,8 @@ public class MainActivity extends Activity implements OnClickListener,
 	/**
 	 * 查找和正确答案对应的按钮
 	 * 
-	 * @param index 第几个待填入按钮
+	 * @param index
+	 *            第几个待填入按钮
 	 * @return 对应的WordButton
 	 */
 	private WordButton findButton(int index) {
@@ -263,6 +269,7 @@ public class MainActivity extends Activity implements OnClickListener,
 		if (mCurrentCoins + data >= 0) {
 			mCurrentCoins += data;
 			mTV_totalCoins.setText(mCurrentCoins + "");
+			MyPlayer.playTone(MainActivity.this, MyPlayer.TONE_INDEX_COIN);
 			return true;
 		} else {
 			// 金币不足
@@ -287,8 +294,8 @@ public class MainActivity extends Activity implements OnClickListener,
 	private int getTipsCoins() {
 		return this.getResources().getInteger(R.integer.pay_tip_anwser);
 	}
-	
-	private int getPassCoins(){
+
+	private int getPassCoins() {
 		return this.getResources().getInteger(R.integer.get_pass_coins);
 	}
 
@@ -310,6 +317,8 @@ public class MainActivity extends Activity implements OnClickListener,
 			case MSG_ANSWER_RIGHT:
 				// 答案正确
 				handlePassEvent();
+				// 停止播放音乐
+				stopCurrentPlayer();
 				break;
 			case MSG_ANSWER_WRONG:
 				// 答案错误，发送文字闪烁信息
@@ -345,7 +354,7 @@ public class MainActivity extends Activity implements OnClickListener,
 
 			mPassSongName.setText(mCurrentStageSong.getmSongName());
 			// 增加过关奖励
-			mCurrentCoins+=getPassCoins();
+			handleCoins(getPassCoins());
 			// 添加点击事件
 			mBtn_nextStage.setOnClickListener(new OnClickListener() {
 
@@ -588,13 +597,6 @@ public class MainActivity extends Activity implements OnClickListener,
 
 	}
 
-	@Override
-	protected void onPause() {
-		mImg_pan.clearAnimation();
-		mImg_bar.clearAnimation();
-		super.onPause();
-	}
-
 	/**
 	 * 待选框点击事件接口实现方法
 	 */
@@ -684,7 +686,7 @@ public class MainActivity extends Activity implements OnClickListener,
 
 		@Override
 		public void onclick() {
-			//  删除一个错误答案
+			// 删除一个错误答案
 			// 最大可删除文字数量
 			int maxCounts = MyGridView.SONG_NAMES_COUNT
 					- mCurrentStageSong.getSongNameLength();
@@ -700,7 +702,8 @@ public class MainActivity extends Activity implements OnClickListener,
 				MaxTimes++;
 			} else {
 				// 超出提示范围
-				Toast.makeText(MainActivity.this, "土豪,游戏不是这么玩的", Toast.LENGTH_SHORT).show();
+				Toast.makeText(MainActivity.this, "土豪,游戏不是这么玩的",
+						Toast.LENGTH_SHORT).show();
 			}
 		}
 	};
@@ -710,7 +713,7 @@ public class MainActivity extends Activity implements OnClickListener,
 
 		@Override
 		public void onclick() {
-			//  提示正确答案
+			// 提示正确答案
 			// 找到可用的空缺位置
 			boolean isFindPosition = false;
 			// 添加按钮进已选文字
@@ -718,16 +721,16 @@ public class MainActivity extends Activity implements OnClickListener,
 				if (mWordSelected.get(i).getmWordString().length() == 0) {
 					// 扣除金币
 					if (!handleCoins(-getTipsCoins())) {
-						//显示金币不足对话框
+						// 显示金币不足对话框
 						showConfirmAlertDialog(ID_ALERT_DIALOG_LACK_COINS);
 						return;
 					}
 					// 如果空缺,点击按钮
 					WordButton button = findButton(i);
-					if (button.getmButton().getVisibility() == View.VISIBLE) {
+					if (button!=null&&button.getmButton().getVisibility() == View.VISIBLE) {
 						onWordClick(button);
 					} else {
-						Toast.makeText(MainActivity.this, "答案已被选择",
+						Toast.makeText(MainActivity.this, "答案已被选择或者button为null",
 								Toast.LENGTH_SHORT).show();
 					}
 					isFindPosition = true;
@@ -747,8 +750,9 @@ public class MainActivity extends Activity implements OnClickListener,
 
 		@Override
 		public void onclick() {
-			//  金币不足
-			Toast.makeText(MainActivity.this, "这功能老子还没开发", Toast.LENGTH_SHORT).show();
+			// 金币不足
+			Toast.makeText(MainActivity.this, "这功能老子还没开发", Toast.LENGTH_SHORT)
+					.show();
 
 		}
 	};
@@ -768,9 +772,8 @@ public class MainActivity extends Activity implements OnClickListener,
 			break;
 		case ID_ALERT_DIALOG_TIP:
 			// 提示
-			ViewUtil.showAlertDialog(MainActivity.this, "是否花费"
-					+ getTipsCoins() + "金币得到一个正确答案?",
-					alertDialogTipListener);
+			ViewUtil.showAlertDialog(MainActivity.this, "是否花费" + getTipsCoins()
+					+ "金币得到一个正确答案?", alertDialogTipListener);
 			break;
 		case ID_ALERT_DIALOG_LACK_COINS:
 			// 金币不足
@@ -780,8 +783,30 @@ public class MainActivity extends Activity implements OnClickListener,
 		}
 	}
 
+	/**
+	 * 停止当前关播放动作 包括动画和音乐
+	 */
+	public void stopCurrentPlayer() {
+		mImg_pan.clearAnimation();
+		mImg_bar.clearAnimation();
+		MyPlayer.stopSong(MainActivity.this);
+	}
+
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
 	}
+
+	@Override
+	protected void onPause() {
+		stopCurrentPlayer();
+		super.onPause();
+	}
+
+	@Override
+	protected void onResume() {
+
+		super.onResume();
+	}
+
 }
