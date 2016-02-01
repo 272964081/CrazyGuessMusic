@@ -79,7 +79,7 @@ public class MainActivity extends Activity implements OnClickListener,
 	// 当前关的歌曲信息
 	private Song mCurrentStageSong;
 	// 当前关卡信息
-	private int mCurrentStageIndex = -1;
+	private int mCurrentStageIndex ;
 	// 已选择文字信息存储容器
 	private ArrayList<WordButton> mWordSelected;
 	// 非答案按钮
@@ -89,7 +89,7 @@ public class MainActivity extends Activity implements OnClickListener,
 	// 全部按钮文字信息容器
 	private ArrayList<WordButton> mAllForSelectList = new ArrayList<WordButton>();
 	// 玩家初始金币总额
-	private int mCurrentCoins = Const.TOTAL_COINS;
+	private int mCurrentCoins ;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -124,6 +124,9 @@ public class MainActivity extends Activity implements OnClickListener,
 		mMyGridView.setOnWordClickListener(this);
 		mBtn_delete.setOnClickListener(this);
 		mBtn_tips.setOnClickListener(this);
+		//初始化关卡
+		mCurrentStageIndex = ViewUtil.loadData(MainActivity.this)[Const.INDEX_DATA_STAGE];
+		mCurrentCoins = ViewUtil.loadData(MainActivity.this)[Const.INDEX_DATA_COINS];
 		// 初始化数据
 		initCurrentStageData();
 
@@ -133,6 +136,8 @@ public class MainActivity extends Activity implements OnClickListener,
 	 * 初始化当前关卡
 	 */
 	public void initCurrentStageData() {
+		// 重置已通关标志位
+		isPass = false;
 		// 更新已选择文字框数据
 		updateSelectedContainer();
 		// 获取数据
@@ -337,7 +342,9 @@ public class MainActivity extends Activity implements OnClickListener,
 	/**
 	 * 过关事件处理
 	 */
+	private boolean isPass;
 	private void handlePassEvent() {
+		isPass = true;
 		mPassView = findViewById(R.id.passView);
 		if (mPassView != null) {
 			// 显示过关索引和歌曲名
@@ -361,10 +368,14 @@ public class MainActivity extends Activity implements OnClickListener,
 				@Override
 				public void onClick(View v) {
 					if (isPassApp()) {
+						//重置数据
+						ViewUtil.resetData(MainActivity.this);
 						// 通关界面
 						ViewUtil.startActivity(MainActivity.this,
 								AllPassViewActivity.class);
 					} else {
+						//存储数据
+						ViewUtil.saveData(MainActivity.this, mCurrentStageIndex, mCurrentCoins);
 						// 加载下一关
 						mPassView.setVisibility(View.GONE);
 						initCurrentStageData();
@@ -791,22 +802,14 @@ public class MainActivity extends Activity implements OnClickListener,
 		mImg_bar.clearAnimation();
 		MyPlayer.stopSong(MainActivity.this);
 	}
-
-	@Override
-	protected void onDestroy() {
-		super.onDestroy();
-	}
-
 	@Override
 	protected void onPause() {
+		if(isPass){
+			//存储数据
+			ViewUtil.saveData(MainActivity.this, mCurrentStageIndex, mCurrentCoins);
+		}
+		//停止动画及音乐播放
 		stopCurrentPlayer();
 		super.onPause();
 	}
-
-	@Override
-	protected void onResume() {
-
-		super.onResume();
-	}
-
 }

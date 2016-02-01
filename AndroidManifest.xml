@@ -22,7 +22,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name="com.imooc.crazyguessmusic.ui.AllPassViewActivity"></activity>
+        <activity android:name=".ui.AllPassViewActivity"></activity>
     </application>
 
 </manifest>
