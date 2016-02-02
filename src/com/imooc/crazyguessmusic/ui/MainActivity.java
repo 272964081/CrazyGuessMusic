@@ -10,7 +10,6 @@ import android.app.Activity;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -36,6 +35,7 @@ import com.imooc.crazyguessmusic.myUi.MyGridView;
 import com.imooc.crazyguessmusic.util.MyPlayer;
 import com.imooc.crazyguessmusic.util.RandomCharUitl;
 import com.imooc.crazyguessmusic.util.ViewUtil;
+import com.imooc.crazyguessmusic.wechatutil.WeChatUtil;
 
 public class MainActivity extends Activity implements OnClickListener,
 		IWordClickListener {
@@ -66,6 +66,7 @@ public class MainActivity extends Activity implements OnClickListener,
 	private View mPassView;
 	private TextView mTV_totalCoins;
 	private ImageButton mBtn_delete, mBtn_tips;
+	private ImageButton mBtn_share_Wechat;
 	// 当前关索引
 	private TextView mTV_StageIndex;
 	// 当前关过关关数,过关歌曲
@@ -90,6 +91,9 @@ public class MainActivity extends Activity implements OnClickListener,
 	private ArrayList<WordButton> mAllForSelectList = new ArrayList<WordButton>();
 	// 玩家初始金币总额
 	private int mCurrentCoins ;
+	
+	// 微信工具
+	private WeChatUtil mWeChatUtil;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -105,6 +109,7 @@ public class MainActivity extends Activity implements OnClickListener,
 		mBtn_delete = (ImageButton) findViewById(R.id.btn_delete_word);
 		mBtn_tips = (ImageButton) findViewById(R.id.btn_tip);
 		mTV_StageIndex = (TextView) findViewById(R.id.tv_currentStage);
+		mBtn_share_Wechat = (ImageButton) findViewById(R.id.imgBtn_share_WeChat);
 		// 初始化动画
 		// 盘片动画
 		mPanAnim = AnimationUtils.loadAnimation(MainActivity.this,
@@ -124,6 +129,7 @@ public class MainActivity extends Activity implements OnClickListener,
 		mMyGridView.setOnWordClickListener(this);
 		mBtn_delete.setOnClickListener(this);
 		mBtn_tips.setOnClickListener(this);
+		mBtn_share_Wechat.setOnClickListener(this);
 		//初始化关卡
 		mCurrentStageIndex = ViewUtil.loadData(MainActivity.this)[Const.INDEX_DATA_STAGE];
 		mCurrentCoins = ViewUtil.loadData(MainActivity.this)[Const.INDEX_DATA_COINS];
@@ -173,7 +179,19 @@ public class MainActivity extends Activity implements OnClickListener,
 			// 点击提示按钮
 			handleTipAnswer();
 			break;
+		case R.id.imgBtn_share_WeChat:
+			// 分享到微信方法
+			shareToWeChat();
+			break;
 		}
+	}
+	/**
+	 * 每关分享到微信方法
+	 */
+	private void shareToWeChat() {
+		String str = "大家快来围观,我神奇的创过了猜歌游戏的第["+mCurrentStageIndex+"]关!";
+		mWeChatUtil = WeChatUtil.getInstance(MainActivity.this);
+		mWeChatUtil.sendRequest(str);
 	}
 
 	/**
@@ -811,5 +829,12 @@ public class MainActivity extends Activity implements OnClickListener,
 		//停止动画及音乐播放
 		stopCurrentPlayer();
 		super.onPause();
+	}
+	
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+		//释放资源
+		MyPlayer.releasePlayer();
 	}
 }

@@ -96,4 +96,18 @@ public class MyPlayer {
 		}
 	}
 
+	/**
+	 * 销毁播放器
+	 * 
+	 */
+	public static void releasePlayer() {
+		if (mMusicMediaPlayer != null) {
+			mMusicMediaPlayer.release();
+		}
+		for (int i = 0; i < mToneMediaPlayer.length; i++) {
+			if (mToneMediaPlayer[i] != null) {
+				mToneMediaPlayer[i].release();
+			}
+		}
+	}
 }

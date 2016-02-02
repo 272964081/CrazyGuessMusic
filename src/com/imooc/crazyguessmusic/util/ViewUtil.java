@@ -174,5 +174,7 @@ public class ViewUtil {
 	public static void resetData(Context context){
 		saveData(context, Const.INDEX_STAGE, Const.TOTAL_COINS);
 	}
+	
+	
 
 }
