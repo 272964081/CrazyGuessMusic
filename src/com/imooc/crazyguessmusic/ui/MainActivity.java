@@ -10,7 +10,6 @@ import android.app.Activity;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -68,7 +67,7 @@ public class MainActivity extends Activity implements OnClickListener,
 	private View mPassView;
 	private TextView mTV_totalCoins;
 	private ImageButton mBtn_delete, mBtn_tips;
-	private ImageButton mBtn_share_Wechat;
+	private ImageButton mBtn_top_back, mBtn_top_coins;
 	// 当前关索引
 	private TextView mTV_StageIndex;
 	// 当前关过关关数,过关歌曲
@@ -82,7 +81,7 @@ public class MainActivity extends Activity implements OnClickListener,
 	// 当前关的歌曲信息
 	private Song mCurrentStageSong;
 	// 当前关卡信息
-	private int mCurrentStageIndex ;
+	private int mCurrentStageIndex;
 	// 已选择文字信息存储容器
 	private ArrayList<WordButton> mWordSelected;
 	// 非答案按钮
@@ -92,11 +91,10 @@ public class MainActivity extends Activity implements OnClickListener,
 	// 全部按钮文字信息容器
 	private ArrayList<WordButton> mAllForSelectList = new ArrayList<WordButton>();
 	// 玩家初始金币总额
-	private int mCurrentCoins ;
-	
+	private int mCurrentCoins;
+
 	// 数据库
 	private DBHelperDAOimpl dbHelper;
-	
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -112,7 +110,9 @@ public class MainActivity extends Activity implements OnClickListener,
 		mBtn_delete = (ImageButton) findViewById(R.id.btn_delete_word);
 		mBtn_tips = (ImageButton) findViewById(R.id.btn_tip);
 		mTV_StageIndex = (TextView) findViewById(R.id.tv_currentStage);
-		//初始化数据库
+		mBtn_top_back = (ImageButton) findViewById(R.id.btn_top_back);
+		mBtn_top_coins = (ImageButton) findViewById(R.id.btn_top_coins);
+		// 初始化数据库
 		dbHelper = new DBHelperDAOimpl(MainActivity.this);
 		// 盘片动画
 		mPanAnim = AnimationUtils.loadAnimation(MainActivity.this,
@@ -132,9 +132,11 @@ public class MainActivity extends Activity implements OnClickListener,
 		mMyGridView.setOnWordClickListener(this);
 		mBtn_delete.setOnClickListener(this);
 		mBtn_tips.setOnClickListener(this);
-		//初始化关卡
-		mCurrentStageIndex = dbHelper.loadInfo()[0];
-		mCurrentCoins =dbHelper.loadInfo()[1];
+		mBtn_top_back.setOnClickListener(this);
+		mBtn_top_coins.setOnClickListener(this);
+		// 初始化关卡
+		mCurrentStageIndex = dbHelper.loadInfo()[Const.INDEX_DATA_STAGE];
+		mCurrentCoins = dbHelper.loadInfo()[Const.INDEX_DATA_COINS];
 		// 初始化数据
 		initCurrentStageData();
 
@@ -181,6 +183,12 @@ public class MainActivity extends Activity implements OnClickListener,
 			// 点击提示按钮
 			handleTipAnswer();
 			break;
+		case R.id.btn_top_back:
+			this.finish();
+			break;
+		case R.id.btn_top_coins:
+			alertDialogLackCoinsListener.onclick();
+			break;
 		}
 	}
 
@@ -189,7 +197,6 @@ public class MainActivity extends Activity implements OnClickListener,
 	 */
 	private void handlePlay() {
 		mImg_bar.startAnimation(mBar_in);
-		Log.i("lang", mCurrentStageSong.getSongFileName());
 		// 播放音乐
 		MyPlayer.playSong(MainActivity.this,
 				mCurrentStageSong.getSongFileName());
@@ -352,6 +359,7 @@ public class MainActivity extends Activity implements OnClickListener,
 	 * 过关事件处理
 	 */
 	private boolean isPass;
+
 	private void handlePassEvent() {
 		isPass = true;
 		mPassView = findViewById(R.id.passView);
@@ -378,14 +386,14 @@ public class MainActivity extends Activity implements OnClickListener,
 				public void onClick(View v) {
 					if (isPassApp()) {
 						isAllPass = true;
-						//重置数据
+						// 重置数据
 						dbHelper.saveInfo(Const.INDEX_STAGE, Const.TOTAL_COINS);
 						// 通关界面
 						ViewUtil.startActivity(MainActivity.this,
 								AllPassViewActivity.class);
 					} else {
 						isAllPass = false;
-						//存储数据
+						// 存储数据
 						dbHelper.saveInfo(mCurrentStageIndex, mCurrentCoins);
 						// 加载下一关
 						mPassView.setVisibility(View.GONE);
@@ -749,11 +757,13 @@ public class MainActivity extends Activity implements OnClickListener,
 					}
 					// 如果空缺,点击按钮
 					WordButton button = findButton(i);
-					if (button!=null&&button.getmButton().getVisibility() == View.VISIBLE) {
+					if (button != null
+							&& button.getmButton().getVisibility() == View.VISIBLE) {
 						onWordClick(button);
 					} else {
-						Toast.makeText(MainActivity.this, "答案已被选择或者button为null",
-								Toast.LENGTH_SHORT).show();
+						Toast.makeText(MainActivity.this,
+								"答案已被选择或者button为null", Toast.LENGTH_SHORT)
+								.show();
 					}
 					isFindPosition = true;
 					break;
@@ -772,7 +782,7 @@ public class MainActivity extends Activity implements OnClickListener,
 
 		@Override
 		public void onclick() {
-			// 金币不足
+			// 金币不足,进入商城
 			Toast.makeText(MainActivity.this, "这功能老子还没开发", Toast.LENGTH_SHORT)
 					.show();
 
@@ -813,21 +823,22 @@ public class MainActivity extends Activity implements OnClickListener,
 		mImg_bar.clearAnimation();
 		MyPlayer.stopSong(MainActivity.this);
 	}
+
 	@Override
 	protected void onPause() {
-		if(isPass&&!isAllPass){
-			//存储数据
+		if (isPass && !isAllPass) {
+			// 存储数据
 			dbHelper.saveInfo(mCurrentStageIndex, mCurrentCoins);
 		}
-		//停止动画及音乐播放
+		// 停止动画及音乐播放
 		stopCurrentPlayer();
 		super.onPause();
 	}
-	
+
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
-		//释放资源
+		// 释放资源
 		MyPlayer.releasePlayer();
 	}
 }
