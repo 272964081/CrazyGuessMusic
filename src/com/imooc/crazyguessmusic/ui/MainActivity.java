@@ -28,6 +28,7 @@ import android.widget.TextView;
 
 import com.imooc.crazyguessmusic.R;
 import com.imooc.crazyguessmusic.data.Const;
+import com.imooc.crazyguessmusic.db.DBHelperDAOimpl;
 import com.imooc.crazyguessmusic.modle.IAlertDialogClickListener;
 import com.imooc.crazyguessmusic.modle.IWordClickListener;
 import com.imooc.crazyguessmusic.modle.Song;
@@ -58,6 +59,7 @@ public class MainActivity extends Activity implements OnClickListener,
 	public static final int ID_ALERT_DIALOG_LACK_COINS = 3;
 	// 文字闪烁标志位
 	private boolean isFlash;
+	private boolean isAllPass;
 	// 控件
 	private Animation mPanAnim, mBar_in, mBar_out;
 	private ImageButton mIbtn_play;
@@ -66,6 +68,7 @@ public class MainActivity extends Activity implements OnClickListener,
 	private View mPassView;
 	private TextView mTV_totalCoins;
 	private ImageButton mBtn_delete, mBtn_tips;
+	private ImageButton mBtn_share_Wechat;
 	// 当前关索引
 	private TextView mTV_StageIndex;
 	// 当前关过关关数,过关歌曲
@@ -90,6 +93,10 @@ public class MainActivity extends Activity implements OnClickListener,
 	private ArrayList<WordButton> mAllForSelectList = new ArrayList<WordButton>();
 	// 玩家初始金币总额
 	private int mCurrentCoins ;
+	
+	// 数据库
+	private DBHelperDAOimpl dbHelper;
+	
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -105,7 +112,8 @@ public class MainActivity extends Activity implements OnClickListener,
 		mBtn_delete = (ImageButton) findViewById(R.id.btn_delete_word);
 		mBtn_tips = (ImageButton) findViewById(R.id.btn_tip);
 		mTV_StageIndex = (TextView) findViewById(R.id.tv_currentStage);
-		// 初始化动画
+		//初始化数据库
+		dbHelper = new DBHelperDAOimpl(MainActivity.this);
 		// 盘片动画
 		mPanAnim = AnimationUtils.loadAnimation(MainActivity.this,
 				R.anim.rotate_pan);
@@ -125,8 +133,8 @@ public class MainActivity extends Activity implements OnClickListener,
 		mBtn_delete.setOnClickListener(this);
 		mBtn_tips.setOnClickListener(this);
 		//初始化关卡
-		mCurrentStageIndex = ViewUtil.loadData(MainActivity.this)[Const.INDEX_DATA_STAGE];
-		mCurrentCoins = ViewUtil.loadData(MainActivity.this)[Const.INDEX_DATA_COINS];
+		mCurrentStageIndex = dbHelper.loadInfo()[0];
+		mCurrentCoins =dbHelper.loadInfo()[1];
 		// 初始化数据
 		initCurrentStageData();
 
@@ -181,6 +189,7 @@ public class MainActivity extends Activity implements OnClickListener,
 	 */
 	private void handlePlay() {
 		mImg_bar.startAnimation(mBar_in);
+		Log.i("lang", mCurrentStageSong.getSongFileName());
 		// 播放音乐
 		MyPlayer.playSong(MainActivity.this,
 				mCurrentStageSong.getSongFileName());
@@ -368,14 +377,16 @@ public class MainActivity extends Activity implements OnClickListener,
 				@Override
 				public void onClick(View v) {
 					if (isPassApp()) {
+						isAllPass = true;
 						//重置数据
-						ViewUtil.resetData(MainActivity.this);
+						dbHelper.saveInfo(Const.INDEX_STAGE, Const.TOTAL_COINS);
 						// 通关界面
 						ViewUtil.startActivity(MainActivity.this,
 								AllPassViewActivity.class);
 					} else {
+						isAllPass = false;
 						//存储数据
-						ViewUtil.saveData(MainActivity.this, mCurrentStageIndex, mCurrentCoins);
+						dbHelper.saveInfo(mCurrentStageIndex, mCurrentCoins);
 						// 加载下一关
 						mPassView.setVisibility(View.GONE);
 						initCurrentStageData();
@@ -804,12 +815,19 @@ public class MainActivity extends Activity implements OnClickListener,
 	}
 	@Override
 	protected void onPause() {
-		if(isPass){
+		if(isPass&&!isAllPass){
 			//存储数据
-			ViewUtil.saveData(MainActivity.this, mCurrentStageIndex, mCurrentCoins);
+			dbHelper.saveInfo(mCurrentStageIndex, mCurrentCoins);
 		}
 		//停止动画及音乐播放
 		stopCurrentPlayer();
 		super.onPause();
+	}
+	
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+		//释放资源
+		MyPlayer.releasePlayer();
 	}
 }

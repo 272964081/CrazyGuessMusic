@@ -68,7 +68,7 @@ public class MyPlayer {
 			mMusicMediaPlayer = new MediaPlayer();
 		}
 		// 重置播放器
-		mMusicMediaPlayer.reset();
+			mMusicMediaPlayer.reset();
 		try {
 			// 查找文件
 			AssetManager mAssetManager = context.getAssets();
@@ -93,6 +93,19 @@ public class MyPlayer {
 	public static void stopSong(Context context) {
 		if (mMusicMediaPlayer != null) {
 			mMusicMediaPlayer.stop();
+		}
+	}
+	
+	public static void releasePlayer(){
+		if(mMusicMediaPlayer!=null){
+			mMusicMediaPlayer.release();
+			mMusicMediaPlayer = null;
+		}
+		for (int i = 0; i < mToneMediaPlayer.length; i++) {
+			if(mToneMediaPlayer[i]!=null){
+				mToneMediaPlayer[i].release();
+				mToneMediaPlayer[i] = null;
+			}
 		}
 	}
 
